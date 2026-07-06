@@ -43,6 +43,8 @@ monitoring on both deployed services.
 | --- | --- | --- |
 | ![Login page](docs/screenshots/login.png) | ![Projects dashboard](docs/screenshots/dashboard.png) | ![Kanban board](docs/screenshots/board.png) |
 
+**Demo video:** [`docs/demo/demo.mp4`](docs/demo/demo.mp4) — short walkthrough of the core flow (register → create project → create task → drag it across the board).
+
 **Monitoring in action:**
 
 | UptimeRobot (both services up) | Sentry — backend error captured | Sentry — frontend error captured |
@@ -117,7 +119,7 @@ capstone-project/
 │   ├── tests/e2e/            # Playwright specs
 │   └── Dockerfile
 ├── docker-compose.yml
-└── docs/                     # ARCHITECTURE.md, DEPLOYMENT.md, screenshots/
+└── docs/                     # ARCHITECTURE.md, DEPLOYMENT.md, screenshots/, demo/
 ```
 
 ## Local setup
