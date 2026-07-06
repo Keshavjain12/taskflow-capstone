@@ -4,9 +4,14 @@ import { useProjects } from "../../hooks/useProjects";
 import { UserMenu } from "./UserMenu";
 import { CommandPalette } from "./CommandPalette";
 import { NotificationsBell } from "./NotificationsBell";
-import { IconFolder, IconKanban, IconX } from "../ui/Icons";
+import { IconCommand, IconFolder, IconKanban, IconX } from "../ui/Icons";
 
 const PROJECT_DOT_COLORS = ["bg-brand-500", "bg-accent-500", "bg-sky-500", "bg-emerald-500", "bg-amber-500"];
+
+const SHORTCUTS = [
+  { keys: ["Ctrl", "K"], label: "Jump to a project" },
+  { keys: ["Esc"], label: "Close any dialog" },
+];
 
 export function Sidebar({ mobileOpen, onCloseMobile }: { mobileOpen: boolean; onCloseMobile: () => void }) {
   const { id: activeProjectId } = useParams();
@@ -90,6 +95,30 @@ export function Sidebar({ mobileOpen, onCloseMobile }: { mobileOpen: boolean; on
             </div>
           </div>
         )}
+
+        <div className="mt-7 rounded-xl border border-surface-200 bg-surface-50/60 p-3.5 dark:border-surface-800 dark:bg-surface-900/60">
+          <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-surface-400">
+            <IconCommand className="h-3.5 w-3.5" />
+            Shortcuts
+          </p>
+          <div className="mt-2.5 space-y-2">
+            {SHORTCUTS.map((s) => (
+              <div key={s.label} className="flex items-center justify-between gap-2">
+                <span className="text-xs text-surface-500 dark:text-surface-400">{s.label}</span>
+                <span className="flex items-center gap-1">
+                  {s.keys.map((k) => (
+                    <kbd
+                      key={k}
+                      className="rounded-md border border-surface-300 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-surface-600 shadow-soft dark:border-surface-700 dark:bg-surface-800 dark:text-surface-300"
+                    >
+                      {k}
+                    </kbd>
+                  ))}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
 
         <div className="mt-auto pt-4">
           <UserMenu />

@@ -2,8 +2,12 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "../hooks/useAuth";
 import { useProjects } from "../hooks/useProjects";
+import { useDashboardOverview } from "../hooks/useDashboard";
 import { ProjectCard } from "../components/projects/ProjectCard";
 import { CreateProjectModal } from "../components/projects/CreateProjectModal";
+import { DashboardStats } from "../components/dashboard/DashboardStats";
+import { DashboardActivity } from "../components/dashboard/DashboardActivity";
+import { DashboardUpcoming } from "../components/dashboard/DashboardUpcoming";
 import { CardSkeleton } from "../components/ui/Skeleton";
 import { EmptyState } from "../components/ui/EmptyState";
 import { ErrorState } from "../components/ui/ErrorState";
@@ -21,6 +25,7 @@ export function ProjectsPage() {
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const { data, isLoading, isError, refetch } = useProjects({ search: search || undefined });
+  const overview = useDashboardOverview();
 
   const total = data?.meta.total ?? 0;
 
@@ -46,6 +51,14 @@ export function ProjectsPage() {
           </button>
         </div>
       </div>
+
+      <DashboardStats
+        totalProjects={overview.totalProjects}
+        totalTasks={overview.totalTasks}
+        completedThisWeek={overview.completedThisWeek}
+        overdueCount={overview.overdueCount}
+        isLoading={overview.isLoading}
+      />
 
       <div className="relative mt-6 max-w-sm">
         <IconSearch className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-400" />
@@ -91,6 +104,28 @@ export function ProjectsPage() {
           {data.data.map((project, i) => (
             <ProjectCard key={project.id} project={project} index={i} />
           ))}
+          <button
+            onClick={() => setModalOpen(true)}
+            className="flex min-h-[9.5rem] flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-surface-300 p-5 text-surface-400 transition hover:border-brand-400 hover:text-brand-500 dark:border-surface-700 dark:hover:border-brand-600 dark:hover:text-brand-400"
+          >
+            <IconPlus className="h-5 w-5" />
+            <span className="text-sm font-medium">New project</span>
+          </button>
+        </div>
+      )}
+
+      {!isLoading && !isError && data && data.data.length > 0 && (
+        <div className="mt-8 grid gap-4 lg:grid-cols-2">
+          <div>
+            <h2 className="mb-3 text-sm font-semibold text-surface-700 dark:text-surface-300">
+              Recent activity
+            </h2>
+            <DashboardActivity tasks={overview.recentActivity} isLoading={overview.isLoading} />
+          </div>
+          <div>
+            <h2 className="mb-3 text-sm font-semibold text-surface-700 dark:text-surface-300">Coming up</h2>
+            <DashboardUpcoming tasks={overview.upcoming} isLoading={overview.isLoading} />
+          </div>
         </div>
       )}
 
