@@ -7,6 +7,7 @@ import pinoHttp from "pino-http";
 import swaggerUi from "swagger-ui-express";
 import { env } from "./config/env";
 import { logger } from "./config/logger";
+import { Sentry } from "./config/sentry";
 import { apiV1Router } from "./routes";
 import { errorHandler, notFoundHandler } from "./middlewares/errorHandler";
 import { apiRateLimiter } from "./middlewares/rateLimiter";
@@ -48,7 +49,21 @@ export function createApp(): Application {
   // Versioned API
   app.use("/api/v1", apiV1Router);
 
+  // Verification helper — hit this URL and check the Sentry dashboard to
+  // confirm error tracking is wired up, instead of needing a real bug.
+  // Always returns a 500 (via errorHandler below); if SENTRY_DSN isn't set,
+  // the error simply isn't reported anywhere, same as any other error.
+  app.get("/debug-sentry", () => {
+    throw new Error("Test error — confirms Sentry error tracking is wired up.");
+  });
+
   app.use(notFoundHandler);
+
+  // Reports any error thrown by a route/middleware above to Sentry (a no-op
+  // if SENTRY_DSN isn't set), then forwards to our own errorHandler below so
+  // the JSON response shape stays consistent either way.
+  Sentry.setupExpressErrorHandler(app);
+
   app.use(errorHandler);
 
   return app;

@@ -23,4 +23,8 @@ export const env = {
   logLevel: process.env.LOG_LEVEL ?? "info",
   isProduction: process.env.NODE_ENV === "production",
   isTest: process.env.NODE_ENV === "test",
+  // Optional: error tracking is only enabled when a DSN is configured, so the
+  // app runs identically (and doesn't crash) in environments where Sentry
+  // hasn't been set up yet — e.g. local dev, or before the account exists.
+  sentryDsn: process.env.SENTRY_DSN,
 } as const;
