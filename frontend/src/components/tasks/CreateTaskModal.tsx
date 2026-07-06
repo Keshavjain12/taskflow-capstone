@@ -37,16 +37,16 @@ export function CreateTaskModal({
     <Modal open={open} onClose={onClose} title="New task" subtitle="Break the work down into something shippable.">
       <form className="space-y-4" onSubmit={onSubmit}>
         <div>
-          <label className="label">Title</label>
-          <input className="input" autoFocus placeholder="e.g. Wire up the login form" {...register("title", { required: true, minLength: 2 })} />
+          <label className="label" htmlFor="task-title">Title</label>
+          <input id="task-title" className="input" autoFocus placeholder="e.g. Wire up the login form" {...register("title", { required: true, minLength: 2 })} />
         </div>
         <div>
-          <label className="label">Description</label>
-          <textarea className="input" rows={3} placeholder="Add any useful context" {...register("description")} />
+          <label className="label" htmlFor="task-description">Description</label>
+          <textarea id="task-description" className="input" rows={3} placeholder="Add any useful context" {...register("description")} />
         </div>
         <div>
-          <label className="label">Priority</label>
-          <select className="input" {...register("priority")}>
+          <label className="label" htmlFor="task-priority">Priority</label>
+          <select id="task-priority" className="input" {...register("priority")}>
             <option value="LOW">Low</option>
             <option value="MEDIUM">Medium</option>
             <option value="HIGH">High</option>

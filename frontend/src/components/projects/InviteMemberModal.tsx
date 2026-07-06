@@ -38,8 +38,9 @@ export function InviteMemberModal({
     <Modal open={open} onClose={onClose} title="Invite a member" subtitle="They'll need an existing TaskFlow account.">
       <form className="space-y-4" onSubmit={onSubmit}>
         <div>
-          <label className="label">Email</label>
+          <label className="label" htmlFor="invite-email">Email</label>
           <input
+            id="invite-email"
             type="email"
             className="input"
             autoFocus
@@ -49,8 +50,8 @@ export function InviteMemberModal({
           {errors.email && <p className="mt-1.5 text-xs font-medium text-red-600 dark:text-red-400">{errors.email.message}</p>}
         </div>
         <div>
-          <label className="label">Role</label>
-          <select className="input" {...register("role")}>
+          <label className="label" htmlFor="invite-role">Role</label>
+          <select id="invite-role" className="input" {...register("role")}>
             <option value="MEMBER">Member</option>
             <option value="OWNER">Owner</option>
           </select>

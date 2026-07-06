@@ -25,12 +25,12 @@ export function CreateProjectModal({ open, onClose }: { open: boolean; onClose: 
     <Modal open={open} onClose={onClose} title="New project" subtitle="Give your team something to rally around.">
       <form className="space-y-4" onSubmit={onSubmit}>
         <div>
-          <label className="label">Name</label>
-          <input className="input" autoFocus placeholder="e.g. Website Relaunch" {...register("name", { required: true, minLength: 2 })} />
+          <label className="label" htmlFor="project-name">Name</label>
+          <input id="project-name" className="input" autoFocus placeholder="e.g. Website Relaunch" {...register("name", { required: true, minLength: 2 })} />
         </div>
         <div>
-          <label className="label">Description</label>
-          <textarea className="input" rows={3} placeholder="What's this project about?" {...register("description")} />
+          <label className="label" htmlFor="project-description">Description</label>
+          <textarea id="project-description" className="input" rows={3} placeholder="What's this project about?" {...register("description")} />
         </div>
         <div className="flex justify-end gap-3 pt-2">
           <button type="button" className="btn-secondary" onClick={onClose}>

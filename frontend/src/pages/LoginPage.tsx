@@ -24,8 +24,9 @@ export function LoginPage() {
 
       <form className="mt-7 space-y-4" onSubmit={handleSubmit((data) => login.mutate(data))}>
         <div>
-          <label className="label">Email</label>
+          <label className="label" htmlFor="login-email">Email</label>
           <input
+            id="login-email"
             type="email"
             className="input"
             placeholder="demo@taskflow.dev"
@@ -35,9 +36,10 @@ export function LoginPage() {
         </div>
         <div>
           <div className="flex items-center justify-between">
-            <label className="label !mb-1.5">Password</label>
+            <label className="label !mb-1.5" htmlFor="login-password">Password</label>
           </div>
           <input
+            id="login-password"
             type="password"
             className="input"
             placeholder="••••••••"

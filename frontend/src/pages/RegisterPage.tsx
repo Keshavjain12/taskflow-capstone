@@ -25,18 +25,19 @@ export function RegisterPage() {
 
       <form className="mt-7 space-y-4" onSubmit={handleSubmit((data) => registerUser.mutate(data))}>
         <div>
-          <label className="label">Name</label>
-          <input className="input" placeholder="Ada Lovelace" {...register("name", { required: "Name is required", minLength: 2 })} />
+          <label className="label" htmlFor="register-name">Name</label>
+          <input id="register-name" className="input" placeholder="Ada Lovelace" {...register("name", { required: "Name is required", minLength: 2 })} />
           {errors.name && <p className="mt-1.5 text-xs font-medium text-red-600 dark:text-red-400">{errors.name.message}</p>}
         </div>
         <div>
-          <label className="label">Email</label>
-          <input type="email" className="input" placeholder="you@example.com" {...register("email", { required: "Email is required" })} />
+          <label className="label" htmlFor="register-email">Email</label>
+          <input id="register-email" type="email" className="input" placeholder="you@example.com" {...register("email", { required: "Email is required" })} />
           {errors.email && <p className="mt-1.5 text-xs font-medium text-red-600 dark:text-red-400">{errors.email.message}</p>}
         </div>
         <div>
-          <label className="label">Password</label>
+          <label className="label" htmlFor="register-password">Password</label>
           <input
+            id="register-password"
             type="password"
             className="input"
             placeholder="••••••••"
