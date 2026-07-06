@@ -1,15 +1,25 @@
 # TaskFlow — Full-Stack Task & Project Management Capstone
 
-[![Backend CI/CD](https://github.com/YOUR_USERNAME/YOUR_REPO/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/YOUR_REPO/actions/workflows/backend-ci.yml)
-[![Frontend CI/CD](https://github.com/YOUR_USERNAME/YOUR_REPO/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/YOUR_REPO/actions/workflows/frontend-ci.yml)
+[![Backend CI/CD](https://github.com/Keshavjain12/taskflow-capstone/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/Keshavjain12/taskflow-capstone/actions/workflows/backend-ci.yml)
+[![Frontend CI/CD](https://github.com/Keshavjain12/taskflow-capstone/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/Keshavjain12/taskflow-capstone/actions/workflows/frontend-ci.yml)
+
+**Live app:** https://taskflow-capstone.vercel.app · **API health check:** https://taskflow-capstone.onrender.com/health
+
+> Backend runs on Render's free tier, which spins down after inactivity — the first request after a quiet
+> period can take up to ~50s to wake it up. Reloading or waiting a moment resolves it.
 
 TaskFlow is a production-style task/project management app: users register, create projects, invite
-teammates by email, and organize work on a per-project Kanban board (To do → In progress → In review → Done).
+teammates by email, and organize work on a per-project Kanban board (To do → In progress → In review → Done)
+with real pointer-based drag-and-drop. Beyond the core rubric it also includes a command palette (Cmd/Ctrl+K),
+a dashboard with live stats/recent-activity/upcoming-work widgets, a notifications bell, a per-project
+analytics tab and activity feed, and threaded task comments.
+
 It is built end-to-end per the capstone handbook: a typed Node.js/Express API, a React/TypeScript frontend,
 PostgreSQL via Prisma, JWT auth with refresh tokens, automated tests at three levels, Docker/Compose,
-GitHub Actions CI/CD, and Swagger API docs.
+GitHub Actions CI/CD with auto-deploy, Swagger API docs, and Sentry error tracking + UptimeRobot uptime
+monitoring on both deployed services.
 
-> **Demo login (after seeding):** `demo@taskflow.dev` / `Password123!`
+> **Demo login (after seeding):** `demo@taskflow.dev` / `Password123!` — or just register your own account.
 
 ## Table of contents
 
@@ -29,9 +39,15 @@ GitHub Actions CI/CD, and Swagger API docs.
 
 ## Screenshots
 
-_Add screenshots or a short demo GIF of the login screen, the projects dashboard, and the Kanban board here
-before final submission (e.g. `docs/screenshots/board.png`), and a link to a 60–90s demo video walking
-through: register → create project → create task → move it across the board._
+| Login | Dashboard | Kanban board |
+| --- | --- | --- |
+| ![Login page](docs/screenshots/login.png) | ![Projects dashboard](docs/screenshots/dashboard.png) | ![Kanban board](docs/screenshots/board.png) |
+
+**Monitoring in action:**
+
+| UptimeRobot (both services up) | Sentry — backend error captured | Sentry — frontend error captured |
+| --- | --- | --- |
+| ![UptimeRobot monitors](docs/screenshots/monitoring.png) | ![Sentry backend issue](docs/screenshots/sentry-backend.png) | ![Sentry frontend issue](docs/screenshots/sentry-frontend.png) |
 
 ## Architecture
 
@@ -73,6 +89,7 @@ See [`backend/prisma/schema.prisma`](backend/prisma/schema.prisma).
 | Containers     | Docker (multi-stage builds), Docker Compose                              |
 | CI/CD          | GitHub Actions (lint → typecheck → test → build → push → deploy)         |
 | API docs       | swagger-jsdoc + swagger-ui-express at `/api-docs`                        |
+| Monitoring     | Sentry (error tracking), UptimeRobot (uptime), Pino (structured logs)    |
 
 ## Project structure
 
@@ -81,7 +98,7 @@ capstone-project/
 ├── .github/workflows/       # backend-ci.yml, frontend-ci.yml
 ├── backend/
 │   ├── src/
-│   │   ├── config/          # env, db (Prisma client), logger
+│   │   ├── config/          # env, db (Prisma client), logger, sentry
 │   │   ├── controllers/     # thin HTTP handlers
 │   │   ├── middlewares/     # auth, validate, errorHandler, rateLimiter
 │   │   ├── models/          # Zod request schemas
@@ -89,16 +106,18 @@ capstone-project/
 │   │   ├── services/        # business logic + authorization
 │   │   ├── utils/           # AppError, jwt, pagination, asyncHandler
 │   │   ├── docs/            # swagger.ts
+│   │   ├── instrument.ts    # Sentry init entry point (imported first)
 │   │   ├── app.ts / server.ts
 │   ├── prisma/               # schema.prisma, migrations/, seed.ts
 │   ├── tests/{unit,integration}
+│   ├── start.sh              # migrate -> seed (best-effort) -> start
 │   └── Dockerfile
 ├── frontend/
 │   ├── src/{pages,components,hooks,api,store,lib}
 │   ├── tests/e2e/            # Playwright specs
 │   └── Dockerfile
 ├── docker-compose.yml
-└── docs/                     # ARCHITECTURE.md, DEPLOYMENT.md
+└── docs/                     # ARCHITECTURE.md, DEPLOYMENT.md, screenshots/
 ```
 
 ## Local setup
@@ -108,8 +127,8 @@ capstone-project/
 ### Option A — Docker Compose (matches production, zero manual setup)
 
 ```bash
-git clone <your-repo-url>
-cd capstone-project
+git clone https://github.com/Keshavjain12/taskflow-capstone.git
+cd taskflow-capstone
 docker compose up --build
 ```
 
@@ -167,6 +186,7 @@ is running, generated from JSDoc annotations in `backend/src/routes/*.ts` (`swag
 | PATCH  | `/api/v1/projects/:projectId/tasks/:id`      | ✓    | Update task (status, priority, ...)   |
 | DELETE | `/api/v1/projects/:projectId/tasks/:id`      | ✓    | Delete task                           |
 | GET    | `/health`                                    | –    | Liveness/health probe                 |
+| GET    | `/debug-sentry`                              | –    | Throws a test error to verify Sentry wiring |
 
 All list endpoints accept `page`, `limit`, `search`, and resource-specific filters (`status`, `priority`,
 `assigneeId`) plus `sortBy`/`sortOrder`, and return a `meta` block (`page`, `limit`, `total`, `totalPages`,
@@ -186,7 +206,8 @@ CI runs all of the above automatically on every push/PR to `main` (see [CI/CD pi
 
 ## Docker & Docker Compose
 
-- `backend/Dockerfile` — multi-stage (`builder` → `runner`), non-root user, `HEALTHCHECK` against `/health`.
+- `backend/Dockerfile` — multi-stage (`builder` → `runner`), non-root user, `HEALTHCHECK` against `/health`,
+  `start.sh` as the boot command (migrate → seed best-effort → start).
 - `frontend/Dockerfile` — multi-stage, static build served by nginx with SPA fallback routing.
 - `docker-compose.yml` — brings up Postgres, backend (migrate → seed → start), and frontend with proper
   `depends_on`/health-based ordering. Run with `docker compose up --build`.
@@ -203,24 +224,27 @@ Two independent GitHub Actions workflows (path-scoped, so a frontend-only change
 
 Required repo secrets: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `RENDER_DEPLOY_HOOK`, `VERCEL_DEPLOY_HOOK`.
 Set these under **Settings → Secrets and variables → Actions** in your GitHub repo — never commit them.
+All four are configured on this repo, so every push to `main` that passes CI automatically redeploys both
+services — no manual deploy step required.
 
 ## Deployment
 
-| Component | Recommended host                      |
-| --------- | --------------------------------------- |
-| Frontend  | Vercel or Netlify (static build, auto-deploy from `main`) |
-| Backend   | Render or Railway (Docker-native)        |
-| Database  | Render Postgres, Supabase, or MongoDB Atlas equivalent (managed Postgres) |
-
-**Live URLs:** _fill in after you deploy — e.g._
-`Frontend: https://taskflow-yourname.vercel.app` · `Backend health: https://taskflow-api-yourname.onrender.com/health`
+| Component | Host                                     | Live URL |
+| --------- | ----------------------------------------- | -------- |
+| Frontend  | Vercel (static build, auto-deploy from `main`) | https://taskflow-capstone.vercel.app |
+| Backend   | Render (Docker-native, auto-deploy from `main`) | https://taskflow-capstone.onrender.com |
+| Database  | Neon (managed serverless Postgres)        | — |
 
 ## Monitoring & logging
 
 - Structured JSON logs via **Pino** (`pino-http` request logging, redacts `Authorization`/passwords/tokens).
-- `/health` endpoint for container healthchecks and external uptime monitors (e.g. UptimeRobot, every 5 min).
-- Recommended for production: point **Sentry** (frontend + backend) and **Better Stack/Logtail** at the
-  deployed services — both have free tiers and only need an env var + a few lines of init code.
+- `/health` endpoint for container healthchecks and external uptime monitors.
+- **UptimeRobot** polls both the frontend and the backend `/health` endpoint every 5 minutes and emails on
+  downtime.
+- **Sentry** is wired into both apps and opt-in via env var (`SENTRY_DSN` backend, `VITE_SENTRY_DSN`
+  frontend) — see `backend/src/config/sentry.ts` and `frontend/src/main.tsx`. Uncaught exceptions on either
+  service are captured with a full stack trace, breadcrumbs, and request/browser context. Neither app
+  requires Sentry to be configured to run: both simply skip initialization if the DSN env var is unset.
 
 ## Environment variables
 
@@ -231,24 +255,24 @@ See `backend/.env.example` and `frontend/.env.example` for the full list. Highli
 | `DATABASE_URL` | backend | Postgres connection string |
 | `JWT_ACCESS_SECRET` / `JWT_REFRESH_SECRET` | backend | Sign/verify JWTs — must be long, random, and different from each other |
 | `CLIENT_ORIGIN` | backend | Locks CORS to the deployed frontend origin |
+| `SENTRY_DSN` | backend (optional) | Enables backend error tracking if set |
 | `VITE_API_URL` | frontend (build-time) | Base URL the SPA calls |
+| `VITE_SENTRY_DSN` | frontend (build-time, optional) | Enables frontend error tracking if set |
 
 ## Known limitations & future work
 
 - **Real-time updates:** the board currently refetches via TanStack Query invalidation rather than
   WebSocket/SSE push; a `Socket.IO` layer would make multi-user boards feel instant.
-- **Drag-and-drop:** task status changes use a select dropdown rather than pointer-based drag-and-drop, to
-  keep the dependency footprint small; swapping in `@dnd-kit` is a natural next step.
 - **Refresh-token revocation list:** logout invalidates the stored hash for that user, but there's no
   per-device session list yet (only one active refresh token per user at a time).
 - **bcryptjs instead of native bcrypt:** the handbook suggests `bcrypt`; this project uses `bcryptjs` (a
   pure-JS, API-compatible implementation) to avoid native build tooling (`node-gyp`) in constrained/offline
   build environments and slimmer Docker images. Hashing behavior and security properties are equivalent.
-- **Notifications, activity log, CSV export:** not yet implemented — natural "enhancement" candidates once
-  the core rubric is fully covered.
-- **This repository was assembled in a sandboxed environment without outbound access to Docker Hub, GitHub
-  release assets, or `binaries.prisma.sh`.** Dependency installation, linting, type-checking, and unit tests
-  were verified to run and pass in that sandbox; `prisma generate` (which downloads a query-engine binary)
-  and live deployment could not be executed there. Both work normally with standard internet access — run
-  `npm run prisma:generate` once after `npm install` in your own environment, and `docker compose up --build`
-  to bring up the full stack .
+- **CSV export:** not yet implemented — a natural next enhancement.
+- **Free-tier cold starts:** the Render backend spins down after ~15 minutes of inactivity (free tier), so
+  the first request after a quiet period is slow (~50s) while it wakes up; subsequent requests are fast.
+  Upgrading to a paid Render instance removes this entirely.
+
+---
+
+Built by Keshav Raj Jain.
