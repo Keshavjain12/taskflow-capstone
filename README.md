@@ -251,4 +251,4 @@ See `backend/.env.example` and `frontend/.env.example` for the full list. Highli
   were verified to run and pass in that sandbox; `prisma generate` (which downloads a query-engine binary)
   and live deployment could not be executed there. Both work normally with standard internet access — run
   `npm run prisma:generate` once after `npm install` in your own environment, and `docker compose up --build`
-  to bring up the full stack.
+  to bring up the full stack .

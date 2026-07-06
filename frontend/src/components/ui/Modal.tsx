@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { IconX } from "./Icons";
 
 interface ModalProps {
@@ -17,7 +18,24 @@ const SIZE_CLASS: Record<"md" | "lg", string> = {
 };
 
 export function Modal({ open, onClose, title, subtitle, children, size = "md" }: ModalProps) {
-  return (
+  // Rendered via a portal straight to <body>. The app shell wraps every routed
+  // page in an animated (transformed) wrapper for page-transition effects,
+  // and any CSS transform on an ancestor turns `position: fixed` descendants
+  // into elements positioned relative to that ancestor instead of the real
+  // viewport. Without the portal, a fixed "centered" modal can end up
+  // centered against the *page content* rather than the screen.
+  //
+  // The centering (-translate-x-1/2 -translate-y-1/2) and the framer-motion
+  // entrance animation (scale/y) are deliberately split across two nested
+  // elements. Both would otherwise write to the same `transform` CSS
+  // property — framer-motion sets it as an inline style, which always wins
+  // over Tailwind's stylesheet rule, silently cancelling the centering
+  // translate. That left the card's *top* edge pinned to the viewport's
+  // vertical midpoint instead of shifted up by half its own height, so it
+  // rendered fine when short and ran off the bottom of the screen when
+  // tall. The outer div owns position + centering only (plain CSS, no
+  // framer-motion); the inner motion.div owns only the fade/scale/slide.
+  return createPortal(
     <AnimatePresence>
       {open && (
         <>
@@ -30,35 +48,40 @@ export function Modal({ open, onClose, title, subtitle, children, size = "md" }:
             onClick={onClose}
             aria-hidden="true"
           />
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: 12 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.97, y: 8 }}
-            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="modal-title"
-            className={`card fixed left-1/2 top-1/2 z-50 max-h-[85vh] w-full ${SIZE_CLASS[size]} -translate-x-1/2 -translate-y-1/2 overflow-y-auto p-6 sm:p-7`}
+          <div
+            className={`fixed left-1/2 top-1/2 z-50 max-h-[85vh] w-full ${SIZE_CLASS[size]} -translate-x-1/2 -translate-y-1/2`}
           >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h2 id="modal-title" className="text-lg font-semibold text-surface-900 dark:text-surface-100">
-                  {title}
-                </h2>
-                {subtitle && <p className="mt-0.5 text-sm text-surface-500 dark:text-surface-400">{subtitle}</p>}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.97, y: 8 }}
+              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="modal-title"
+              className="card max-h-[85vh] w-full overflow-y-auto p-6 sm:p-7"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 id="modal-title" className="text-lg font-semibold text-surface-900 dark:text-surface-100">
+                    {title}
+                  </h2>
+                  {subtitle && <p className="mt-0.5 text-sm text-surface-500 dark:text-surface-400">{subtitle}</p>}
+                </div>
+                <button
+                  onClick={onClose}
+                  aria-label="Close"
+                  className="rounded-lg p-1.5 text-surface-400 transition hover:bg-surface-100 hover:text-surface-700 dark:hover:bg-surface-800 dark:hover:text-surface-200"
+                >
+                  <IconX className="h-4.5 w-4.5" />
+                </button>
               </div>
-              <button
-                onClick={onClose}
-                aria-label="Close"
-                className="rounded-lg p-1.5 text-surface-400 transition hover:bg-surface-100 hover:text-surface-700 dark:hover:bg-surface-800 dark:hover:text-surface-200"
-              >
-                <IconX className="h-4.5 w-4.5" />
-              </button>
-            </div>
-            <div className="mt-5">{children}</div>
-          </motion.div>
+              <div className="mt-5">{children}</div>
+            </motion.div>
+          </div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }

@@ -18,15 +18,19 @@ test.describe("TaskFlow happy path", () => {
     await expect(page).toHaveURL(/\/projects$/);
     await expect(page.getByText("No projects yet")).toBeVisible();
 
-    await page.getByRole("button", { name: "+ New project" }).click();
+    await page.getByRole("button", { name: "New project", exact: true }).click();
     await page.getByLabel("Name").fill("E2E Project");
     await page.getByRole("button", { name: "Create project" }).click();
 
-    await expect(page.getByText("E2E Project")).toBeVisible();
-    await page.getByText("E2E Project").click();
+    // Scoped to the project card's heading, since the dashboard's "Recent
+    // activity" widget and sidebar "Recent" list can also render the same
+    // project name as plain text elsewhere on the page.
+    const projectCardHeading = page.getByRole("heading", { name: "E2E Project" });
+    await expect(projectCardHeading).toBeVisible();
+    await projectCardHeading.click();
 
     await expect(page).toHaveURL(/\/projects\/.+/);
-    await page.getByRole("button", { name: "+ New task" }).click();
+    await page.getByRole("button", { name: "New task", exact: true }).click();
     await page.getByLabel("Title").fill("Write E2E coverage");
     await page.getByRole("button", { name: "Create task" }).click();
 
@@ -35,7 +39,10 @@ test.describe("TaskFlow happy path", () => {
     await page
       .getByLabel("Change status for Write E2E coverage")
       .selectOption("DONE");
-    await expect(page.getByText("Done (1)")).toBeVisible();
+
+    const doneHeader = page.getByRole("heading", { name: "Done" });
+    const doneColumn = doneHeader.locator("xpath=..");
+    await expect(doneColumn.getByText("1", { exact: true })).toBeVisible();
   });
 
   test("login page rejects invalid credentials", async ({ page }) => {
